@@ -1,5 +1,6 @@
 import User from "../models/User.js"
 import Cart from "../models/Cart.js"
+import cloudinary from 'cloudinary'
 
 export async function createUser (req, res) {
   const user = new User(req.body)
@@ -72,5 +73,22 @@ export async function logout(req, res){
 
 export async function upload(req, res){
   console.log(req.file, req.body)
-  res.status(500).send(true)
+  console.log('PORTTTTT: ',process.env.PORT)
+  cloudinary.config({ 
+
+  });
+  
+  const cloudUrl = await cloudinary.v2.uploader.upload(
+    `./${req.file.path}`,
+    { public_id: "avatar" });
+  console.log('url: ',cloudUrl)
+  
+    
+  const data = {...req.body, avatar: cloudUrl.secure_url}
+  const user = new User(data)
+  await user.save()
+  
+  const cart = await Cart.create({ user: user._id, products: [] })
+  
+  res.status(500).send([cart, user])
 }
